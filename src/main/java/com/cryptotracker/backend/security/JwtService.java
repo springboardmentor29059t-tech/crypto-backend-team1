@@ -17,25 +17,27 @@ public class JwtService {
 
     public JwtService(
             @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs) {
+            @Value("${app.jwt.expiration-ms}") long expirationMs
+    ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expirationMs = expirationMs;
     }
 
-    public String generateToken(String subject, Map<String,Object> claims) {
+    public String generateToken(String subject) {
+        return generateToken(subject, Map.of());
+    }
+
+    public String generateToken(String subject, Map<String, Object> claims) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
+
         return Jwts.builder()
-                .setSubject(subject)
+                .setSubject(subject)     // subject = USER ID
                 .addClaims(claims)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(key)
                 .compact();
-    }
-
-    public String generateToken(String subject) {
-        return generateToken(subject, Map.of());
     }
 
     public String extractSubject(String token) {
@@ -45,5 +47,9 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    public Long extractUserId(String token) {
+        return Long.parseLong(extractSubject(token));
     }
 }

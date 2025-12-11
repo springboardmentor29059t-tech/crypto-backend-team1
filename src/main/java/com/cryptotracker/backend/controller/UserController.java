@@ -1,22 +1,27 @@
 package com.cryptotracker.backend.controller;
 
+import com.cryptotracker.backend.security.JwtService;
 import com.cryptotracker.backend.user.User;
-import org.springframework.security.core.Authentication;
+import com.cryptotracker.backend.user.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
+@RequiredArgsConstructor
 public class UserController {
 
-    // 🔐 Protected test endpoint
-    @GetMapping("/test")
-    public String testAuth() {
-        return "Authenticated API is working!";
-    }
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
 
-    // 🔥 IMPORTANT: Endpoint to return logged-in user details
     @GetMapping("/me")
-    public User getLoggedUser(Authentication authentication) {
-        return (User) authentication.getPrincipal();
+    public User getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.replace("Bearer ", "");
+        Long userId = jwtService.extractUserId(token);
+
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }

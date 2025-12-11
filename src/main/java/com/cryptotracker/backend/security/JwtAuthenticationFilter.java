@@ -34,16 +34,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String token = authHeader.substring(7);
-        String email;
+        Long userId;
+
         try {
-            email = jwtService.extractSubject(token);
+            userId = jwtService.extractUserId(token); // ⭐ using userId, not email
         } catch (Exception ex) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            User user = userRepository.findByEmail(email).orElse(null);
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            User user = userRepository.findById(userId).orElse(null);
             if (user != null) {
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
@@ -57,7 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/api/auth");
+        return request.getServletPath().startsWith("/api/auth");
     }
 }
