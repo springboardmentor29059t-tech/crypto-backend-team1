@@ -19,9 +19,7 @@ public class UserApiKeyController {
 
     private final UserApiKeyService userApiKeyService;
 
-    // ----------------------------------------------------
     // 1️⃣ SAVE API KEY
-    // ----------------------------------------------------
     @PostMapping("/keys")
     public UserApiKey saveKey(
             @AuthenticationPrincipal User user,
@@ -30,17 +28,19 @@ public class UserApiKeyController {
         return userApiKeyService.saveApiKey(user, request);
     }
 
-    // ----------------------------------------------------
     // 2️⃣ GET USER KEYS
-    // ----------------------------------------------------
     @GetMapping("/keys")
     public List<UserApiKey> getKeys(@AuthenticationPrincipal User user) {
         return userApiKeyService.getUserKeys(user.getId());
     }
 
-    // ----------------------------------------------------
+    // 🔥 2️⃣.b REQUIRED FOR FRONTEND → /keys/my
+    @GetMapping("/keys/my")
+    public List<UserApiKey> getMyKeys(@AuthenticationPrincipal User user) {
+        return userApiKeyService.getUserKeys(user.getId());
+    }
+
     // 3️⃣ DELETE SPECIFIC KEY
-    // ----------------------------------------------------
     @DeleteMapping("/keys/{keyId}")
     public String deleteKey(
             @AuthenticationPrincipal User user,

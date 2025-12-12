@@ -1,8 +1,10 @@
 package com.cryptotracker.backend.auth;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class RegisterRequest {
     private String name;
     private String email;

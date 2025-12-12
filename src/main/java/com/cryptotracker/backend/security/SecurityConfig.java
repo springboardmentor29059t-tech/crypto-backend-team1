@@ -1,5 +1,6 @@
 package com.cryptotracker.backend.security;
 
+import com.cryptotracker.backend.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,24 +20,42 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
     private final UserDetailsService userDetailsService;
+
+    // ⭐ Register JwtAuthenticationFilter as a Bean (Required for Spring Boot 3+)
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtService, userRepository);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
-                .cors(cors -> {})            // ⭐ ENABLE CORS
+                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
+                
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()          // ⭐ Public: login/register
-                        .requestMatchers("/api/exchange/list").permitAll()    // ⭐ Public: exchange dropdown
-                        .anyRequest().authenticated()                          // Everything else requires JWT
+                        .requestMatchers("/api/auth/**").permitAll()         // login/register open
+                        .requestMatchers("/api/exchange/list").permitAll()   // public exchange dropdown
+
+                        // ⭐ FIXED: allow authenticated access to your API key endpoints
+                        .requestMatchers("/api/exchange/keys/**").authenticated()
+                        .requestMatchers("/api/binance/**").authenticated()
+
+                        .anyRequest().authenticated()
                 )
+
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // ⭐ KEY FIX — ensure JWT filter runs before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

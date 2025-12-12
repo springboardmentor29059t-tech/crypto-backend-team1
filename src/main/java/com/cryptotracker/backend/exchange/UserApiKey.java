@@ -24,11 +24,12 @@ public class UserApiKey {
     @JoinColumn(name = "exchange_id", nullable = false)
     private Exchange exchange;
 
-    @Column(nullable = false)
+    @Column(name = "api_key", nullable = false)
     private String apiKey;
 
-    @Column(nullable = false)
+    @Column(name = "api_secret", nullable = false)
     private String apiSecret;
 
     private String label;
 }
+

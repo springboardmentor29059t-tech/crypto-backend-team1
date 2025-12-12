@@ -14,7 +14,7 @@ public class BinanceConnectionController {
     private final UserApiKeyRepository userApiKeyRepository;
 
     @GetMapping("/test/{keyId}")
-    public boolean testBinanceKey(@PathVariable Long keyId) {
+    public boolean testConnection(@PathVariable Long keyId) {
 
         UserApiKey key = userApiKeyRepository.findById(keyId)
                 .orElseThrow(() -> new RuntimeException("API Key not found"));
