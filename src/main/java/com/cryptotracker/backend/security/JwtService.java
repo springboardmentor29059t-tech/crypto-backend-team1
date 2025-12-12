@@ -1,55 +1,87 @@
 package com.cryptotracker.backend.security;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Map;
 
 @Service
 public class JwtService {
 
-    private final Key key;
-    private final long expirationMs;
+    private static final String SECRET_KEY =
+            "b8e42f79c5a14ed2a9b7e0bafbf95012b8e42f79c5a14ed2a9b7e0bafbf95012"; // 64-char key
 
-    public JwtService(
-            @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs
-    ) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expirationMs = expirationMs;
+    private static final long EXPIRATION = 1000 * 60 * 60 * 10; // 10 hours
+
+    private Key getSigningKey() {
+        return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
-    public String generateToken(String subject) {
-        return generateToken(subject, Map.of());
-    }
+    // ---------------------------
+    // CREATE JWT WITH USER ID
+    // ---------------------------
+   public String generateToken(String subject) {
+    return Jwts.builder()
+            .setSubject(subject) // NOW userId, not email
+            .setIssuedAt(new Date())
+            .setExpiration(Date.from(Instant.now().plus(7, ChronoUnit.DAYS)))
+            .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+            .compact();
+}
 
-    public String generateToken(String subject, Map<String, Object> claims) {
-        Date now = new Date();
-        Date expiry = new Date(now.getTime() + expirationMs);
 
+    private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
-                .setSubject(subject)     // subject = USER ID
-                .addClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
-                .signWith(key)
+                .setClaims(claims)
+                .setSubject(subject)        // 👈 SUB = USER ID
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    // ---------------------------
+    // EXTRACT USER ID FROM TOKEN
+    // ---------------------------
     public String extractSubject(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return extractAllClaims(token).getSubject(); // returns userId as String
     }
 
     public Long extractUserId(String token) {
-        return Long.parseLong(extractSubject(token));
+        try {
+            return Long.valueOf(extractSubject(token));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // ---------------------------
+    // VALIDATE TOKEN
+    // ---------------------------
+    public boolean isTokenValid(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            return !claims.getExpiration().before(new Date());
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    // ---------------------------
+    // INTERNAL CLAIM EXTRACTION
+    // ---------------------------
+    private Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

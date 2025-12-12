@@ -25,14 +25,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})   // ⭐ ENABLE CORS
+                .cors(cors -> {})            // ⭐ ENABLE CORS
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // public routes
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/**").permitAll()          // ⭐ Public: login/register
+                        .requestMatchers("/api/exchange/list").permitAll()    // ⭐ Public: exchange dropdown
+                        .anyRequest().authenticated()                          // Everything else requires JWT
                 )
-                .sessionManagement(sess -> 
-                    sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement(sess ->
+                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
@@ -54,7 +55,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) 
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
             throws Exception {
         return config.getAuthenticationManager();
     }

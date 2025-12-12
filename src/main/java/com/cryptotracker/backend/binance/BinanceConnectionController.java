@@ -1,8 +1,8 @@
 package com.cryptotracker.backend.binance;
 
-import com.cryptotracker.backend.security.JwtService;
+import com.cryptotracker.backend.exchange.UserApiKey;
+import com.cryptotracker.backend.exchange.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -10,21 +10,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class BinanceConnectionController {
 
-    private final JwtService jwtService;
-    private final BinanceConnectorService binanceConnectorService;
+    private final BinanceConnectorService binanceService;
+    private final UserApiKeyRepository userApiKeyRepository;
 
     @GetMapping("/test/{keyId}")
-    public ResponseEntity<String> testBinance(
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long keyId
-    ) {
-        String token = authHeader.substring(7);
-        Long userId = jwtService.extractUserId(token);
+    public boolean testBinanceKey(@PathVariable Long keyId) {
 
-        boolean success = binanceConnectorService.testConnection(userId, keyId);
+        UserApiKey key = userApiKeyRepository.findById(keyId)
+                .orElseThrow(() -> new RuntimeException("API Key not found"));
 
-        return ResponseEntity.ok(
-                success ? "Connection successful" : "Connection failed"
-        );
+        return binanceService.testConnection(key.getApiKey(), key.getApiSecret());
     }
 }

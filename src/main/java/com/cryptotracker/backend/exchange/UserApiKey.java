@@ -1,14 +1,12 @@
 package com.cryptotracker.backend.exchange;
 
 import com.cryptotracker.backend.user.User;
-
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "user_api_key")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,19 +16,19 @@ public class UserApiKey {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String label;
-
-    @Column(name = "api_key_value")
-    private String apiKeyValue;
-
-    @Column(name = "api_secret_value")
-    private String apiSecretValue;
-
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "exchange_id")
+    @JoinColumn(name = "exchange_id", nullable = false)
     private Exchange exchange;
+
+    @Column(nullable = false)
+    private String apiKey;
+
+    @Column(nullable = false)
+    private String apiSecret;
+
+    private String label;
 }
