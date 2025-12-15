@@ -37,16 +37,19 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()         // login/register open
-                        .requestMatchers("/api/exchange/list").permitAll()   // public exchange dropdown
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers("/api/auth/**").permitAll()
+        .requestMatchers("/api/exchange/list").permitAll()
 
-                        // ⭐ FIXED: allow authenticated access to your API key endpoints
-                        .requestMatchers("/api/exchange/keys/**").authenticated()
-                        .requestMatchers("/api/binance/**").authenticated()
+        // ⭐ ADD THIS LINE (THIS IS THE FIX)
+        .requestMatchers("/api/transactions/**").authenticated()
 
-                        .anyRequest().authenticated()
-                )
+        .requestMatchers("/api/exchange/keys/**").authenticated()
+        .requestMatchers("/api/binance/**").authenticated()
+
+        .anyRequest().authenticated()
+)
+
 
                 .sessionManagement(sess ->
                         sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
