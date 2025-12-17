@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PortfolioHoldingDto {
+public class HoldingDto {
 
     private String asset;
     private double quantity;

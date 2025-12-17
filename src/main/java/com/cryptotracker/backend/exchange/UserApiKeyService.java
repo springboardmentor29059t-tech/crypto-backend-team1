@@ -38,7 +38,7 @@ public class UserApiKeyService {
     // GET ALL USER KEYS
     // ---------------------------
     public List<UserApiKey> getUserKeys(Long userId) {
-        return userApiKeyRepository.findByUserId(userId);
+        return userApiKeyRepository.findByUser_Id(userId);
     }
 
     // ---------------------------

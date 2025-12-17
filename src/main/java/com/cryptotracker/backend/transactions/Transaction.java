@@ -1,17 +1,13 @@
 package com.cryptotracker.backend.transactions;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
+@Data
 @Table(name = "transactions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Transaction {
 
     @Id
@@ -20,10 +16,13 @@ public class Transaction {
 
     private Long userId;
 
-    private String asset;   // BTC
+    private String asset;   // BTC, ETH, SOL
+
     private String type;    // BUY / SELL
+
     private double quantity;
+
     private double price;
 
-    private LocalDate date;
+    private LocalDateTime createdAt;
 }

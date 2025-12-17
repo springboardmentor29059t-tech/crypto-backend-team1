@@ -11,50 +11,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TransactionsController {
 
-    private final TransactionRepository transactionRepository;
+    private final TransactionsService transactionsService;
     private final JwtService jwtService;
 
-    // 🔹 GET all transactions for logged-in user
     @GetMapping
     public List<Transaction> getTransactions(
             @RequestHeader("Authorization") String authHeader
     ) {
-        String token = authHeader.replace("Bearer ", "");
-        Long userId = jwtService.extractUserId(token);
-
-        return transactionRepository.findByUserId(userId);
+        Long userId = extractUserId(authHeader);
+        return transactionsService.getTransactions(userId);
     }
 
-    // 🔹 ADD a new transaction
     @PostMapping
     public Transaction addTransaction(
             @RequestHeader("Authorization") String authHeader,
-            @RequestBody Transaction transaction
+            @RequestBody Transaction tx
     ) {
-        String token = authHeader.replace("Bearer ", "");
-        Long userId = jwtService.extractUserId(token);
-
-        transaction.setUserId(userId);
-        return transactionRepository.save(transaction);
+        Long userId = extractUserId(authHeader);
+        return transactionsService.addTransaction(tx, userId);
     }
 
-    // 🔹 DELETE a transaction
     @DeleteMapping("/{id}")
     public void deleteTransaction(
-            @PathVariable Long id,
-            @RequestHeader("Authorization") String authHeader
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long id
     ) {
+        Long userId = extractUserId(authHeader);
+        transactionsService.deleteTransaction(id, userId);
+    }
+
+    private Long extractUserId(String authHeader) {
         String token = authHeader.replace("Bearer ", "");
-        Long userId = jwtService.extractUserId(token);
-
-        Transaction tx = transactionRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
-
-        // safety check
-        if (!tx.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        transactionRepository.deleteById(id);
+        return jwtService.extractUserId(token);
     }
 }

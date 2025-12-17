@@ -13,40 +13,63 @@ public class PortfolioService {
 
     private final TransactionRepository transactionRepository;
 
-    public List<PortfolioHoldingDto> getUserPortfolio(Long userId) {
+    // 🔹 Core Logic: Build Holdings using Weighted Average Cost
+    public List<HoldingDto> getUserHoldings(Long userId) {
 
         List<Transaction> transactions =
-                transactionRepository.findByUserId(userId);
+                transactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
-        Map<String, PortfolioHoldingDto> map = new HashMap<>();
+        Map<String, HoldingDto> holdingsMap = new HashMap<>();
 
         for (Transaction tx : transactions) {
-
             String asset = tx.getAsset();
-            map.putIfAbsent(asset, new PortfolioHoldingDto(asset, 0, 0));
 
-            PortfolioHoldingDto holding = map.get(asset);
+            holdingsMap.putIfAbsent(asset, new HoldingDto(asset, 0, 0));
 
-            if ("BUY".equals(tx.getType())) {
-                double totalCost =
-                        holding.getAvgBuyPrice() * holding.getQuantity()
-                        + tx.getPrice() * tx.getQuantity();
+            HoldingDto holding = holdingsMap.get(asset);
 
-                double newQty = holding.getQuantity() + tx.getQuantity();
-
-                holding.setAvgBuyPrice(
-                        newQty == 0 ? 0 : totalCost / newQty
-                );
-                holding.setQuantity(newQty);
-            }
-
-            if ("SELL".equals(tx.getType())) {
-                holding.setQuantity(
-                        holding.getQuantity() - tx.getQuantity()
-                );
+            if ("BUY".equalsIgnoreCase(tx.getType())) {
+                applyBuy(holding, tx);
+            } else if ("SELL".equalsIgnoreCase(tx.getType())) {
+                applySell(holding, tx);
             }
         }
 
-        return new ArrayList<>(map.values());
+        // Remove assets with zero quantity
+        holdingsMap.values().removeIf(h -> h.getQuantity() <= 0);
+
+        return new ArrayList<>(holdingsMap.values());
+    }
+
+    // 🔹 BUY logic → Weighted Average
+    private void applyBuy(HoldingDto holding, Transaction tx) {
+
+        double totalCost =
+                (holding.getQuantity() * holding.getAvgBuyPrice()) +
+                (tx.getQuantity() * tx.getPrice());
+
+        double newQuantity = holding.getQuantity() + tx.getQuantity();
+
+        double newAvg =
+                newQuantity == 0 ? 0 : totalCost / newQuantity;
+
+        holding.setQuantity(newQuantity);
+        holding.setAvgBuyPrice(newAvg);
+    }
+
+    // 🔹 SELL logic → reduce quantity, avg stays same
+    private void applySell(HoldingDto holding, Transaction tx) {
+
+        double newQuantity = holding.getQuantity() - tx.getQuantity();
+
+        if (newQuantity < 0) {
+            throw new RuntimeException(
+                "Sell quantity exceeds available holdings for " + holding.getAsset()
+            );
+        }
+
+        holding.setQuantity(newQuantity);
+
+        // avgBuyPrice remains unchanged (industry standard)
     }
 }
