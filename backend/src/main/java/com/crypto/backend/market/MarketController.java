@@ -2,11 +2,13 @@ package com.crypto.backend.market;
 
 import com.crypto.backend.apikey.ApiKey;
 import com.crypto.backend.apikey.ApiKeyService;
+import com.crypto.backend.portfolio.Holding;
+import com.crypto.backend.portfolio.HoldingRequest; // <--- Import this
+import com.crypto.backend.portfolio.PortfolioService;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,14 +17,17 @@ public class MarketController {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    // Dependencies we need to fetch keys and talk to Binance
     private final ApiKeyService apiKeyService;
     private final BinanceConnector binanceConnector;
+    private final PortfolioService portfolioService;
 
     // Constructor Injection
-    public MarketController(ApiKeyService apiKeyService, BinanceConnector binanceConnector) {
+    public MarketController(ApiKeyService apiKeyService,
+                            BinanceConnector binanceConnector,
+                            PortfolioService portfolioService) {
         this.apiKeyService = apiKeyService;
         this.binanceConnector = binanceConnector;
+        this.portfolioService = portfolioService;
     }
 
     // --- EXISTING ENDPOINT (Keep this) ---
@@ -34,30 +39,34 @@ public class MarketController {
         return restTemplate.getForObject(url, String.class);
     }
 
-    // --- NEW ENDPOINT: Get Portfolio Balance ---
+    // --- UPDATED ENDPOINT: Sync & Return Portfolio ---
     @GetMapping("/api/portfolio/{userId}")
-    public Map<String, BigDecimal> getPortfolio(@PathVariable Long userId) {
+    public List<Holding> getPortfolio(@PathVariable Long userId) {
         // 1. Get all API keys for this user
         List<ApiKey> keys = apiKeyService.getKeysByUserId(userId);
-
-        Map<String, BigDecimal> totalPortfolio = new HashMap<>();
 
         for (ApiKey key : keys) {
             // 2. Decrypt the secret
             String decryptedSecret = apiKeyService.getDecryptedSecret(key);
 
-            // 3. If it's Binance (we assume Exchange ID 1 is Binance for now), call it
-            // In a real app, you'd check key.getExchange().getName().equals("Binance")
+            // 3. If it's Binance (ID 1)
             if (key.getExchange().getId() == 1) {
+                // A. Fetch live balances from Binance
                 Map<String, BigDecimal> balances = binanceConnector.getBalances(key.getApiKey(), decryptedSecret);
 
-                // 4. Merge balances (e.g., if you have BTC on two accounts)
-                balances.forEach((asset, amount) ->
-                        totalPortfolio.merge(asset, amount, BigDecimal::add)
-                );
+                // B. SAVE to Database using your new Service
+                // This ensures we persist the data permanently
+                portfolioService.syncBalances(userId, key.getExchange().getId(), balances);
             }
         }
 
-        return totalPortfolio;
+        // 4. Return the data from OUR database
+        return portfolioService.getHoldings(userId);
+    }
+
+    // --- NEW ENDPOINT: Manual Add ---
+    @PostMapping("/api/portfolio/{userId}/manual")
+    public Holding addManualHolding(@PathVariable Long userId, @RequestBody HoldingRequest request) {
+        return portfolioService.manualAddOrUpdate(userId, request);
     }
 }
