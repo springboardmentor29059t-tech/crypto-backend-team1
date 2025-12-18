@@ -12,7 +12,7 @@ public class PriceService {
         String url =
                 "https://api.coingecko.com/api/v3/simple/price" +
                 "?ids=" + ids +
-                "&vs_currencies=usd";
+                "&vs_currencies=inr";
 
         return restTemplate.getForObject(url, String.class);
     }
