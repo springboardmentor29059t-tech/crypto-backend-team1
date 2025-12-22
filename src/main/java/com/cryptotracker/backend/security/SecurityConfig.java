@@ -15,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
@@ -23,6 +24,7 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final UserDetailsService userDetailsService;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -33,11 +35,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            .cors(cors -> {})
+            // ✅ CORRECT CORS wiring
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+
+            // ✅ Stateless JWT → CSRF disabled
             .csrf(csrf -> csrf.disable())
 
             .authorizeHttpRequests(auth -> auth
+                // 🔓 Public APIs
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/prices/**").permitAll()
                 .requestMatchers("/api/exchange/list").permitAll()
 
                 // 🔐 Protected APIs
@@ -48,11 +55,15 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
+            // 🔐 Stateless session
             .sessionManagement(sess ->
                 sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
+            // 🔑 Auth provider
             .authenticationProvider(authenticationProvider())
+
+            // 🔑 JWT filter
             .addFilterBefore(
                 jwtAuthenticationFilter(),
                 UsernamePasswordAuthenticationFilter.class

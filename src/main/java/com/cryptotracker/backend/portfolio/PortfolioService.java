@@ -17,7 +17,8 @@ public class PortfolioService {
     public List<HoldingDto> getUserHoldings(Long userId) {
 
         List<Transaction> transactions =
-                transactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        transactionRepository.findByUserIdOrderByCreatedAtAsc(userId);
+
 
         Map<String, HoldingDto> holdingsMap = new HashMap<>();
 

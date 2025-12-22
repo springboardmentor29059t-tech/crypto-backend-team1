@@ -16,7 +16,7 @@ public class TransactionsService {
     private final HoldingRepository holdingRepository;
 
     public List<Transaction> getTransactions(Long userId) {
-        return transactionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return transactionRepository.findByUserIdOrderByCreatedAtAsc(userId);
     }
 
     public Transaction addTransaction(Transaction tx, Long userId) {
