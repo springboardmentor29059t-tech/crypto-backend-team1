@@ -24,7 +24,6 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final UserDetailsService userDetailsService;
 
-    // ⭐ Register JwtAuthenticationFilter as a Bean (Required for Spring Boot 3+)
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtService, userRepository);
@@ -34,31 +33,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(cors -> {})
-                .csrf(csrf -> csrf.disable())
-                
-      .authorizeHttpRequests(auth -> auth
-        .requestMatchers("/api/auth/**").permitAll()
-        .requestMatchers("/api/exchange/list").permitAll()
+            .cors(cors -> {})
+            .csrf(csrf -> csrf.disable())
 
-        // ⭐ ADD THIS LINE (THIS IS THE FIX)
-        .requestMatchers("/api/transactions/**").authenticated()
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/exchange/list").permitAll()
 
-        .requestMatchers("/api/exchange/keys/**").authenticated()
-        .requestMatchers("/api/binance/**").authenticated()
+                // 🔐 Protected APIs
+                .requestMatchers("/api/transactions/**").authenticated()
+                .requestMatchers("/api/exchange/keys/**").authenticated()
+                .requestMatchers("/api/binance/**").authenticated()
 
-        .anyRequest().authenticated()
-)
+                .anyRequest().authenticated()
+            )
 
+            .sessionManagement(sess ->
+                sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
 
-                .sessionManagement(sess ->
-                        sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-
-                .authenticationProvider(authenticationProvider())
-
-                // ⭐ KEY FIX — ensure JWT filter runs before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(
+                jwtAuthenticationFilter(),
+                UsernamePasswordAuthenticationFilter.class
+            );
 
         return http.build();
     }
@@ -77,8 +75,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
         return config.getAuthenticationManager();
     }
 }
