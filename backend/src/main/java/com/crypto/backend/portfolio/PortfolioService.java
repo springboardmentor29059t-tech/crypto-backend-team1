@@ -2,6 +2,7 @@ package com.crypto.backend.portfolio;
 
 import com.crypto.backend.exchange.Exchange;
 import com.crypto.backend.exchange.ExchangeRepository;
+import com.crypto.backend.trade.TradeService;
 import com.crypto.backend.user.User;
 import com.crypto.backend.user.UserRepository;
 import org.springframework.stereotype.Service;
@@ -18,19 +19,23 @@ public class PortfolioService {
     private final HoldingRepository holdingRepository;
     private final UserRepository userRepository;
     private final ExchangeRepository exchangeRepository;
+    private final TradeService tradeService;
 
     public PortfolioService(HoldingRepository holdingRepository,
                             UserRepository userRepository,
-                            ExchangeRepository exchangeRepository) {
+                            ExchangeRepository exchangeRepository,
+                            TradeService tradeService) {
         this.holdingRepository = holdingRepository;
         this.userRepository = userRepository;
         this.exchangeRepository = exchangeRepository;
+        this.tradeService = tradeService;
     }
 
     public List<Holding> getHoldings(Long userId) {
         return holdingRepository.findByUserId(userId);
     }
 
+    // --- From Week 3: sync balances from exchange into holdings ---
     @Transactional
     public void syncBalances(Long userId, Long exchangeId, Map<String, BigDecimal> exchangeBalances) {
         User user = userRepository.findById(userId)
@@ -43,21 +48,18 @@ public class PortfolioService {
             String symbol = entry.getKey();
             BigDecimal amount = entry.getValue();
 
-            // Check if holding exists FOR THIS SPECIFIC EXCHANGE
-            Holding holding = holdingRepository.findByUserIdAndAssetSymbolAndExchangeId(userId, symbol, exchangeId)
+            Holding holding = holdingRepository
+                    .findByUserIdAndAssetSymbolAndExchangeId(userId, symbol, exchangeId)
                     .orElse(new Holding());
 
             if (holding.getId() == null) {
-                // Set fields only for new rows
                 holding.setUser(user);
                 holding.setAssetSymbol(symbol);
                 holding.setExchange(exchange);
                 holding.setWalletType("EXCHANGE");
-                // avgCost is 0 for now until Week 4
                 holding.setAvgCost(BigDecimal.ZERO);
             }
 
-            // Always update these
             holding.setQuantity(amount);
             holding.setUpdatedAt(LocalDateTime.now());
 
@@ -65,45 +67,57 @@ public class PortfolioService {
         }
     }
 
-    // --- NEW METHOD FOR MANUAL ADD ---
+    // --- From Week 3: manual add/edit holding ---
     @Transactional
     public Holding manualAddOrUpdate(Long userId, HoldingRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 1. Determine the Exchange (if any)
         Exchange exchange = null;
         if (request.getExchangeId() != null) {
             exchange = exchangeRepository.findById(request.getExchangeId())
                     .orElse(null);
         }
 
-        // 2. Determine if we are updating an existing Exchange holding or creating a new Wallet one
         Holding holding;
         if (exchange != null) {
-            // It's an exchange holding: Try to find it
-            holding = holdingRepository.findByUserIdAndAssetSymbolAndExchangeId(userId, request.getAssetSymbol(), request.getExchangeId())
+            holding = holdingRepository
+                    .findByUserIdAndAssetSymbolAndExchangeId(userId,
+                            request.getAssetSymbol(),
+                            request.getExchangeId())
                     .orElse(new Holding());
         } else {
-            // It's a personal wallet: For now, always create new (Simplification for Week 3)
-            // Ideally, we would look up by Wallet Address + Symbol, but let's keep it simple.
             holding = new Holding();
         }
 
-        // 3. Set Values
         holding.setUser(user);
         holding.setAssetSymbol(request.getAssetSymbol());
         holding.setQuantity(request.getQuantity());
-        holding.setWalletType(request.getWalletType()); // "WALLET" or "EXCHANGE"
+        holding.setWalletType(request.getWalletType());
         holding.setExchange(exchange);
         holding.setAddress(request.getAddress());
         holding.setUpdatedAt(LocalDateTime.now());
 
-        // Default avgCost to 0 if not set
         if (holding.getAvgCost() == null) {
             holding.setAvgCost(BigDecimal.ZERO);
         }
 
         return holdingRepository.save(holding);
+    }
+
+    // --- NEW: recompute avgCost for all holdings of a user from trades ---
+    @Transactional
+    public void updateAverageCostForUser(Long userId) {
+        List<Holding> holdings = holdingRepository.findByUserId(userId);
+
+        for (Holding holding : holdings) {
+            String symbol = holding.getAssetSymbol();
+
+            BigDecimal avgCost = tradeService.computeAverageCost(userId, symbol);
+
+            holding.setAvgCost(avgCost);
+            holding.setUpdatedAt(LocalDateTime.now());
+            holdingRepository.save(holding);
+        }
     }
 }
