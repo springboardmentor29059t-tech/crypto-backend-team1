@@ -1,7 +1,7 @@
 package com.cryptotracker.backend.alerts;
 
 public record AlertRequest(
-        String coinId,
-        double price,
-        AlertType type
+        String coinId,          // bitcoin, ethereum, solana
+        double price,           // target price in INR
+        AlertType type           // ABOVE / BELOW
 ) {}

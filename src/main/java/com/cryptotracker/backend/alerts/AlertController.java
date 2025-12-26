@@ -11,50 +11,53 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AlertController {
 
-    private final AlertService service;
+    private final AlertService alertService;
     private final JwtService jwtService;
 
     // ✅ Create alert
     @PostMapping
-    public Alerts create(
-            @RequestHeader("Authorization") String auth,
-            @RequestBody AlertRequest req
+    public Alerts createAlert(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody AlertRequest request
     ) {
-        Long userId = extractUserId(auth);
-        return service.createAlert(
+        Long userId = extractUserId(authHeader);
+        return alertService.createAlert(
                 userId,
-                req.coinId(),
-                req.price(),
-                req.type()
+                request.coinId(),
+                request.price(),
+                request.type()
         );
     }
 
     // ✅ Get user alerts
     @GetMapping
-    public List<Alerts> getAlerts(
-            @RequestHeader("Authorization") String auth
+    public List<Alerts> getUserAlerts(
+            @RequestHeader("Authorization") String authHeader
     ) {
-        return service.getUserAlerts(extractUserId(auth));
+        Long userId = extractUserId(authHeader);
+        return alertService.getUserAlerts(userId);
     }
 
     // ✅ Delete alert
     @DeleteMapping("/{id}")
-    public void delete(
+    public void deleteAlert(
             @PathVariable Long id,
-            @RequestHeader("Authorization") String auth
+            @RequestHeader("Authorization") String authHeader
     ) {
-        service.deleteAlert(id, extractUserId(auth));
+        Long userId = extractUserId(authHeader);
+        alertService.deleteAlert(id, userId);
     }
 
-    // ✅ Manual trigger (optional)
+    // ✅ Manual trigger (for testing / cron alternative)
     @PostMapping("/check")
-    public String checkNow() {
-        service.checkAlerts();
-        return "Alerts checked";
+    public String triggerCheck() {
+        alertService.checkAlerts();
+        return "Alert check completed";
     }
 
-    private Long extractUserId(String auth) {
-        String token = auth.replace("Bearer ", "");
+    // 🔹 Helper
+    private Long extractUserId(String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
         return jwtService.extractUserId(token);
     }
 }

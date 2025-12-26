@@ -51,7 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/transactions/**").authenticated()
                 .requestMatchers("/api/exchange/keys/**").authenticated()
                 .requestMatchers("/api/binance/**").authenticated()
-                .requestMatchers("/api/alerts/**").permitAll()
+               .requestMatchers("/api/alerts/**").authenticated()
+
 
 
                 .anyRequest().authenticated()
