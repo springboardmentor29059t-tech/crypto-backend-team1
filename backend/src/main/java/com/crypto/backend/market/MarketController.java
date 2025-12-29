@@ -5,6 +5,7 @@ import com.crypto.backend.apikey.ApiKeyService;
 import com.crypto.backend.portfolio.Holding;
 import com.crypto.backend.portfolio.HoldingRequest;
 import com.crypto.backend.portfolio.PortfolioService;
+import org.springframework.beans.factory.annotation.Autowired; // Added
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,6 +22,10 @@ public class MarketController {
     private final BinanceConnector binanceConnector;
     private final PortfolioService portfolioService;
 
+    // NEW: Inject the PriceSnapshotService
+    @Autowired
+    private PriceSnapshotService priceSnapshotService;
+
     public MarketController(ApiKeyService apiKeyService,
                             BinanceConnector binanceConnector,
                             PortfolioService portfolioService) {
@@ -28,6 +33,8 @@ public class MarketController {
         this.binanceConnector = binanceConnector;
         this.portfolioService = portfolioService;
     }
+
+    // --- EXISTING METHODS (Weeks 1-4) ---
 
     @GetMapping("/api/coins")
     public String getCoins(@RequestParam String currency) {
@@ -37,7 +44,6 @@ public class MarketController {
         return restTemplate.getForObject(url, String.class);
     }
 
-    // Sync from Binance and return holdings
     @GetMapping("/api/portfolio/{userId}")
     public List<Holding> getPortfolio(@PathVariable Long userId) {
         List<ApiKey> keys = apiKeyService.getKeysByUserId(userId);
@@ -52,21 +58,33 @@ public class MarketController {
                 portfolioService.syncBalances(userId, key.getExchange().getId(), balances);
             }
         }
-
         return portfolioService.getHoldings(userId);
     }
 
-    // Manual add/edit holding
     @PostMapping("/api/portfolio/{userId}/manual")
     public Holding addManualHolding(@PathVariable Long userId,
                                     @RequestBody HoldingRequest request) {
         return portfolioService.manualAddOrUpdate(userId, request);
     }
 
-    // NEW: recompute avgCost for all holdings from trades
     @PostMapping("/api/portfolio/{userId}/recompute-avgcost")
     public List<Holding> recomputeAvgCost(@PathVariable Long userId) {
         portfolioService.updateAverageCostForUser(userId);
         return portfolioService.getHoldings(userId);
+    }
+
+    // --- NEW METHODS (Week 5: Charts & Snapshots) ---
+
+    // Get chart history: GET /api/charts/BTC?period=7d
+    @GetMapping("/api/charts/{symbol}")
+    public List<PriceSnapshot> getChart(@PathVariable String symbol) {
+        return priceSnapshotService.getHistory(symbol.toUpperCase());
+    }
+
+    // Manual snapshot trigger: POST /api/snapshots/capture
+    @PostMapping("/api/snapshots/capture")
+    public String manualCapture() {
+        priceSnapshotService.capturePrices();
+        return "Prices captured manually for all holdings!";
     }
 }
