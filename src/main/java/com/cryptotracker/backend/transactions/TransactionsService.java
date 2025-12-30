@@ -2,6 +2,8 @@ package com.cryptotracker.backend.transactions;
 
 import com.cryptotracker.backend.portfolio.Holding;
 import com.cryptotracker.backend.portfolio.HoldingRepository;
+import com.cryptotracker.backend.risk.RiskAlertService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,28 +16,35 @@ public class TransactionsService {
 
     private final TransactionRepository transactionRepository;
     private final HoldingRepository holdingRepository;
+    private final RiskAlertService riskAlertService;
 
     public List<Transaction> getTransactions(Long userId) {
         return transactionRepository.findByUserIdOrderByCreatedAtAsc(userId);
     }
 
-    public Transaction addTransaction(Transaction tx, Long userId) {
+   public Transaction addTransaction(Transaction tx, Long userId) {
 
-        tx.setUserId(userId);
-        tx.setCreatedAt(LocalDateTime.now());
+    tx.setUserId(userId);
+    tx.setCreatedAt(LocalDateTime.now());
 
-        Holding holding = holdingRepository
-                .findByUserIdAndAsset(userId, tx.getAsset())
-                .orElse(null);
+    Holding holding = holdingRepository
+            .findByUserIdAndAsset(userId, tx.getAsset())
+            .orElse(null);
 
-        if (tx.getType().equals("BUY")) {
-            handleBuy(tx, holding, userId);
-        } else {
-            handleSell(tx, holding);
-        }
-
-        return transactionRepository.save(tx);
+    if ("BUY".equalsIgnoreCase(tx.getType())) {
+        handleBuy(tx, holding, userId);
+    } else if ("SELL".equalsIgnoreCase(tx.getType())) {
+        handleSell(tx, holding);
     }
+
+    Transaction savedTx = transactionRepository.save(tx);
+
+    // 🔔 Risk check AFTER successful transaction
+    riskAlertService.checkRisk(userId, tx.getAsset());
+
+    return savedTx;
+}
+
 
     private void handleBuy(Transaction tx, Holding holding, Long userId) {
 

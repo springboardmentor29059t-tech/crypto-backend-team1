@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/exchange/keys/**").authenticated()
                 .requestMatchers("/api/binance/**").authenticated()
                .requestMatchers("/api/alerts/**").authenticated()
+                .requestMatchers("/api/risk-alerts/**").authenticated()
 
 
 
