@@ -75,11 +75,14 @@ public class MarketController {
 
     // --- NEW METHODS (Week 5: Charts & Snapshots) ---
 
-    // Get chart history: GET /api/charts/BTC?period=7d
+    // Get chart history: GET /api/charts/BTC?period=7d -> prev (for 7days)
+    // new chart data fetch (below)
     @GetMapping("/api/charts/{symbol}")
     public List<PriceSnapshot> getChart(@PathVariable String symbol) {
+        // Use the new simpler query
         return priceSnapshotService.getHistory(symbol.toUpperCase());
     }
+
 
     // Manual snapshot trigger: POST /api/snapshots/capture
     @PostMapping("/api/snapshots/capture")

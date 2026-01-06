@@ -8,8 +8,7 @@ import java.util.List;
 @Repository
 public interface PriceSnapshotRepository extends JpaRepository<PriceSnapshot, Long> {
 
-    // Fetch history for charts (e.g., last 7 days)
-    List<PriceSnapshot> findByAssetSymbolAndCapturedAtAfterOrderByCapturedAtAsc(
-            String assetSymbol, LocalDateTime startTime
-    );
+    // CHANGED: Removed "AndCapturedAtAfter" to ensure you get data regardless of time issues.
+    // We just get all snapshots for the symbol, sorted by time.
+    List<PriceSnapshot> findByAssetSymbolOrderByCapturedAtAsc(String assetSymbol);
 }

@@ -56,8 +56,12 @@ public class PriceSnapshotService {
     }
 
     public List<PriceSnapshot> getHistory(String symbol) {
-        return priceSnapshotRepository.findByAssetSymbolAndCapturedAtAfterOrderByCapturedAtAsc(
-                symbol, LocalDateTime.now().minusDays(7)
-        );
+        // OLD CODE (Causes Error):
+        // return priceSnapshotRepository.findByAssetSymbolAndCapturedAtAfterOrderByCapturedAtAsc(
+        //    symbol, LocalDateTime.now().minusDays(7)
+        // );
+
+        // NEW CORRECT CODE:
+        return priceSnapshotRepository.findByAssetSymbolOrderByCapturedAtAsc(symbol);
     }
 }
