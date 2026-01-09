@@ -14,7 +14,7 @@ public class RiskController {
     @PostMapping("/risk/seed")
     public String seed() {
         riskService.seedScamData();
-        return "Scam Database Seeded";
+        return "Successfully Seeded the Scam Database";
     }
 
     // Requirement: POST /api/alerts/scan/{userId} - Manual scan trigger

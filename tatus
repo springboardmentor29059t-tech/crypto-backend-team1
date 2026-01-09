@@ -1,0 +1,35 @@
+[33mcommit f12fe9a316c99db204edf3bf787dab80599a43d5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mtanmayee-backend[m[33m, [m[1;31morigin/tanmayee-backend[m[33m)[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Tue Jan 6 20:26:14 2026 +0530
+
+    Week 6: Risk Analysis & notifications
+
+[33mcommit 68fb105057a9d8c5ea419b188d858a4a5199deaa[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Mon Dec 29 18:47:17 2025 +0530
+
+    Week -5 : PriceSnapshots cron and charts
+
+[33mcommit c8fec7a3eed09339f1cea086ff1344f2855bda04[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Tue Dec 23 18:34:08 2025 +0530
+
+    Week 4: backend progress update
+
+[33mcommit 16e80396398b6467212df17223f6b5def64c6d62[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Wed Dec 17 18:19:32 2025 +0530
+
+    Updated backend with Week 3 Portfolio Sync and Manual Entry logic
+
+[33mcommit 9edd28b145fc524b268e43cda50738e88de07dc5[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Fri Dec 12 18:37:54 2025 +0530
+
+    Fixed project structure : removed .idea and updated gitignore
+
+[33mcommit 5a7bc5eaed331d7c156311db0a9631e7f6a47208[m
+Author: tanmayeepulipati02 <tanmayeepulipati37@gmail.com>
+Date:   Fri Dec 12 18:24:01 2025 +0530
+
+    Tanmayee backend initial code

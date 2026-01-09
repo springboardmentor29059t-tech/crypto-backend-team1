@@ -15,19 +15,23 @@ public class ScamToken {
     private String contractAddress;
 
     @Column(nullable = false)
-    private String chain; // e.g., "ETH", "BSC"
+    private String chain;
 
     @Column(name = "risk_level")
-    private String riskLevel; // 'low', 'medium', 'high'
+    private String riskLevel;
 
-    private String source; // e.g., "CryptoScamDB"
+    private String source;
 
     @Column(name = "last_seen")
     private LocalDateTime lastSeen;
 
-    // Constructors
+    // NEW FIELD
+    @Column(name = "symbol")
+    private String symbol;
+
     public ScamToken() {}
 
+    // Existing Constructor
     public ScamToken(String contractAddress, String chain, String riskLevel, String source) {
         this.contractAddress = contractAddress;
         this.chain = chain;
@@ -36,11 +40,15 @@ public class ScamToken {
         this.lastSeen = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // Getters
     public Long getId() { return id; }
     public String getContractAddress() { return contractAddress; }
     public String getChain() { return chain; }
     public String getRiskLevel() { return riskLevel; }
     public String getSource() { return source; }
     public LocalDateTime getLastSeen() { return lastSeen; }
+
+    // NEW Getter/Setter for Symbol (Required for the fix)
+    public String getSymbol() { return symbol; }
+    public void setSymbol(String symbol) { this.symbol = symbol; }
 }

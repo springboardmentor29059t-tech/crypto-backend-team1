@@ -6,6 +6,10 @@ import java.util.Optional;
 
 @Repository
 public interface ScamTokenRepository extends JpaRepository<ScamToken, Long> {
-    // Find by contract address (case-insensitive usually handled by DB or UpperCase in code)
+
+    // Find by contract address
     Optional<ScamToken> findByContractAddress(String contractAddress);
+
+    // NEW: Find by token symbol (e.g. "SQUID", "FTT")
+    Optional<ScamToken> findBySymbol(String symbol);
 }
