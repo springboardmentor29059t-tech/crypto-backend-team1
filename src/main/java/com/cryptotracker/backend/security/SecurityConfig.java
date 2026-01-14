@@ -40,24 +40,24 @@ public class SecurityConfig {
 
             // ✅ Stateless JWT → CSRF disabled
             .csrf(csrf -> csrf.disable())
+.authorizeHttpRequests(auth -> auth
+    // 🔓 Public APIs
+    .requestMatchers("/api/auth/**").permitAll()
+    .requestMatchers("/api/exchange/list").permitAll()
 
-            .authorizeHttpRequests(auth -> auth
-                // 🔓 Public APIs
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/prices/**").permitAll()
-                .requestMatchers("/api/exchange/list").permitAll()
+    // 🔐 Protected APIs
+    .requestMatchers("/api/transactions/**").authenticated()
+    .requestMatchers("/api/exchange/keys/**").authenticated()
+    .requestMatchers("/api/binance/**").authenticated()
+    .requestMatchers("/api/alerts/**").authenticated()
+    .requestMatchers("/api/risk-alerts/**").authenticated()
+    .requestMatchers("/api/prices/**").authenticated()
+    .requestMatchers("/api/pnl/**").authenticated()
 
-                // 🔐 Protected APIs
-                .requestMatchers("/api/transactions/**").authenticated()
-                .requestMatchers("/api/exchange/keys/**").authenticated()
-                .requestMatchers("/api/binance/**").authenticated()
-               .requestMatchers("/api/alerts/**").authenticated()
-                .requestMatchers("/api/risk-alerts/**").authenticated()
-
+    .anyRequest().authenticated()
+)
 
 
-                .anyRequest().authenticated()
-            )
 
             // 🔐 Stateless session
             .sessionManagement(sess ->
