@@ -10,4 +10,7 @@ public interface HoldingRepository extends JpaRepository<Holding, Long> {
 
     // Find if User 1 already has BTC on Exchange 1 (Binance)
     Optional<Holding> findByUserIdAndAssetSymbolAndExchangeId(Long userId, String assetSymbol, Long exchangeId);
+
+    // Find holding by user + symbol (FOR P&L)
+    Optional<Holding> findByUserIdAndAssetSymbol(Long userId, String assetSymbol);
 }

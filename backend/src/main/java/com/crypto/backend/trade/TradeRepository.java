@@ -1,7 +1,6 @@
 package com.crypto.backend.trade;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,4 +18,7 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
             Long exchangeId,
             LocalDateTime after
     );
+
+    // Get all SELL trades for user (for P&L)
+    List<Trade> findByUserIdAndSideOrderByExecutedAtAsc(Long userId, String side);
 }
