@@ -23,6 +23,13 @@
     </properties>
 
     <dependencies>
+    <!-- PostgreSQL Driver (REQUIRED for Render) -->
+<dependency>
+    <groupId>org.postgresql</groupId>
+    <artifactId>postgresql</artifactId>
+    <scope>runtime</scope>
+</dependency>
+
 
         <!-- WEB -->
         <dependency>
