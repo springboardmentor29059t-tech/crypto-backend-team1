@@ -13,14 +13,17 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    // 🔹 Keeps your existing MVC-level CORS (non-breaking)
+    // 🔹 MVC-level CORS (for controllers)
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOrigins(
+                                "http://localhost:3000",
+                                "https://crypto-frontend-team1.vercel.app"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
@@ -28,14 +31,17 @@ public class CorsConfig {
         };
     }
 
-    // 🔹 NEW: Required for Spring Security (THIS fixes 403)
+    // 🔹 Security-level CORS (required when using Spring Security)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOrigins(
-                List.of("http://localhost:3000")
+                List.of(
+                        "http://localhost:3000",
+                        "https://crypto-frontend-team1.vercel.app"
+                )
         );
         config.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
